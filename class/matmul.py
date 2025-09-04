@@ -2,19 +2,7 @@ import triton
 import triton.language as tl
 import torch
 import matplotlib.pyplot as plt
-AUTOTUNE_CONFIGS_UNGROUPED = [
-    triton.Config({'BLOCK_SIZE_M': 64,  'BLOCK_SIZE_N': 64,  'BLOCK_SIZE_K': 32}, num_warps=4, num_stages=2),
-    triton.Config({'BLOCK_SIZE_M': 64,  'BLOCK_SIZE_N': 128, 'BLOCK_SIZE_K': 32}, num_warps=8, num_stages=2),
-    triton.Config({'BLOCK_SIZE_M': 128, 'BLOCK_SIZE_N': 64,  'BLOCK_SIZE_K': 32}, num_warps=8, num_stages=2),
-    triton.Config({'BLOCK_SIZE_M': 64,  'BLOCK_SIZE_N': 64,  'BLOCK_SIZE_K': 64}, num_warps=4, num_stages=2),
-]
-
-AUTOTUNE_CONFIGS_GROUPED = [
-    triton.Config({'BLOCK_SIZE_M': 64,  'BLOCK_SIZE_N': 64,  'BLOCK_SIZE_K': 32}, num_warps=4, num_stages=2),
-    triton.Config({'BLOCK_SIZE_M': 64,  'BLOCK_SIZE_N': 128, 'BLOCK_SIZE_K': 32}, num_warps=8, num_stages=2),
-    triton.Config({'BLOCK_SIZE_M': 128, 'BLOCK_SIZE_N': 64,  'BLOCK_SIZE_K': 32}, num_warps=8, num_stages=2),
-    triton.Config({'BLOCK_SIZE_M': 64,  'BLOCK_SIZE_N': 64,  'BLOCK_SIZE_K': 64}, num_warps=4, num_stages=2),
-]
+from config import AUTOTUNE_CONFIGS_UNGROUPED, AUTOTUNE_CONFIGS_GROUPED
 
 @triton.autotune(configs=AUTOTUNE_CONFIGS_UNGROUPED, key=['M', 'N', 'K'])
 @triton.jit
@@ -65,7 +53,6 @@ def grouped_matmul_kernel(a_ptr, b_ptr, c_ptr, M, N, K,
     pid_n = pid_in_group // group_size_m
     pid_m = first_pid_m + (pid_in_group % group_size_m)
 
-    # 尾组不满时可能越界，这里直接返回
     if (pid_m >= num_pid_m) | (pid_n >= num_pid_n):
         return
 
